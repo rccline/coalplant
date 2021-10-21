@@ -1,7 +1,7 @@
 ---
 title: "Coal and Nodes"
 author: "Robert Cline"
-date: "10/14/2021"
+date: "10/20/2021"
 output: html_document
 ---
 
@@ -150,7 +150,7 @@ The calculations below, based upon linear models for coal production is as follo
 
 
  
-```{r fig1, fig.cap="Figure 1: CO2 output from German coal plants by fuel type.", include=FALSE, echo=FALSE}
+```{r fig1, fig.cap="Figure 1: CO2 output from German coal plants by fuel type.", include=TRUE, echo=FALSE}
 ggplot(df, aes(x=MW, y=co2, color=fuel_type)) +
   geom_point() +
   geom_smooth(method = "lm", se=FALSE) +
