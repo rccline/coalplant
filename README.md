@@ -6,6 +6,8 @@ The data source for this project comes in part from the [*European Coal Database
 
 Since the ECD database does not contain the CO2 levels which were produced when the retired plants were in operation, a linear model derived using data from German coal plants is used to estimate the plant MW capacity by analyzing the CO2 production from existing plant operations at the threshold of 800 MW. 
 
-The first document in this repository is *coal_database.Rmd* which is an analysis of the ECD data to estimate CO2 levels for lignite and hard coal plants which produce 800 MW of power.  
+The first document in this repository is *coal_database.Rmd* which is an analysis of the ECD data to estimate CO2 levels for lignite and hard coal plants which produce 800 MW of power. 
 
-The second document of this repository will screen the ECD for a list of coal plants that meet the criteria.   
+*Residuals.Rmd* plots the residuals of the linear regression models which were used in *coal_database.Rmd* to predict CO2 production from MW capacity of the known MW capacity of German coal plants.
+
+A future document to be added to this repository will screen the ECD database for to create a list of coal plants that meet the criteria described above.   
