@@ -1,0 +1,125 @@
+---
+title: "Coal Residuals"
+author: "Robert Cline"
+date: "10/21/2021"
+output:
+  html_document:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      warning=FALSE,
+                      message = FALSE)
+library(readr)
+library(tidyverse)
+library(ggplot2)
+``` 
+
+```{r}
+df <- read_csv("df.csv")
+```
+
+### Hard Coal Residuals
+```{r eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+
+fit <- lm(co2 ~ MW, data = df) # fit the model
+df$predicted <- predict(fit)   # Save the predicted values
+df$residuals <- residuals(fit) # Save the residual values
+ggplot(df, aes(x = MW, y = co2)) +
+  geom_smooth(method = "lm", se = FALSE, color = "lightgrey") +     # regression line  
+  geom_segment(aes(xend = MW, yend = predicted), alpha = .2) +      # draw line from point to line
+  geom_point(aes(color = abs(residuals), size = abs(residuals))) +  # size of the points
+  scale_color_continuous(low = "green", high = "red") +             # colour of the points mapped to residual size - green smaller, red larger
+  guides(color = FALSE, size = FALSE) +                             # Size legend removed
+  geom_point(aes(y = predicted), shape = 1) + 
+  labs(title = "Residuals for Hard coal and lignite")
+  theme_bw()
+```
+
+
+```{r eval=TRUE}
+hc <- df %>% 
+  filter(fuel_type=="hard coal")
+
+lc <- df %>% 
+  filter(fuel_type=="lignite")
+
+
+fithc <- lm(co2 ~ MW, data = hc) # fit the model
+
+hc$predicted <- predict(fithc)   # Save the predicted values
+hc$residuals <- residuals(fithc) # Save the residual values
+ggplot(hc, aes(x = MW, y = co2)) +
+  geom_smooth(method = "lm", se = FALSE, color = "lightgrey") +     # regression line  
+  geom_segment(aes(xend = MW, yend = predicted), alpha = .2) +      # draw line from point to line
+  geom_point(aes(color = abs(residuals), size = abs(residuals))) +  # size of the points
+  scale_color_continuous(low = "green", high = "red") +             # colour of the points mapped to residual size - green smaller, red larger
+  guides(color = FALSE, size = FALSE) +                             # Size legend removed
+  geom_point(aes(y = predicted), shape = 1) +
+labs(title="Hard Coal residuals") +
+  theme_bw()
+``` 
+
+**Residuals vs Fitted** residuals should be equally spread around the horizontal lline without a distinct pattern
+```{r}
+plot(fithc, which=1, col=c("blue"),
+     main="Hard coal")
+``` 
+
+
+**Q-Q plot** residuals should show reasonable alignment with fit line
+```{r}
+plot(fithc, which=2, col=c("blue"),
+     main="Hard coal")
+```
+
+
+**Scale-Location** residuals should be spaced equally above and below the line
+```{r eval=FALSE}
+plot(fitlc, which=3, col=c("blue"),
+     main="Hard coal") 
+```
+
+<br>
+
+### Lignite residuals
+```{r}
+lc <- df %>% 
+  filter(fuel_type=="lignite")
+
+
+fitlc <- lm(co2 ~ MW, data = lc) # fit the model
+
+lc$predicted <- predict(fitlc)   # Save the predicted values
+lc$residuals <- residuals(fitlc) # Save the residual values
+ggplot(lc, aes(x = MW, y = co2)) +
+  geom_smooth(method = "lm", se = FALSE, color = "lightgrey") +     # regression line  
+  geom_segment(aes(xend = MW, yend = predicted), alpha = .2) +      # draw line from point to line
+  geom_point(aes(color = abs(residuals), size = abs(residuals))) +  # size of the points
+  scale_color_continuous(low = "green", high = "red") +             # colour of the points mapped to residual size - green smaller, red larger
+  guides(color = FALSE, size = FALSE) +                             # Size legend removed
+  geom_point(aes(y = predicted), shape = 1) +
+labs(title="Lignite Coal residuals") +
+  theme_bw()
+```
+
+
+**Residuals vs Fitted** residuals should be equally spread around the horizontal lline without a distinct pattern
+```{r}
+plot(fitlc, which=1, col=c("blue"),
+     main="Lignite coal")
+``` 
+
+**Q-Q plot** residuals should show reasonable alignment with fit line
+```{r}
+plot(fitlc, which=2, col=c("blue"),
+     main="Lignite coal")
+``` 
+
+**Scale-Location** residuals should be spaced equally above and below the line
+```{r}
+plot(fitlc, which=3, col=c("blue"),
+     main="Lignite coal") 
+```
+

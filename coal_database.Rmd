@@ -38,7 +38,7 @@ Europe Beyond Coal campaign maintains ***The European Coal Database*** (ECD) whi
 
 The ECD database (xlsx file) contains data from 2005 to 2019 for plants producing more than 15MW.  $CO_2$ emissions are given as EU Transaction Log (EUTL) in tonnes of $CO_2$ as defined by the European Commission of Climate Action [handbook](https://ec.europa.eu/clima/eu-action/eu-emissions-trading-system-eu-ets/union-registry_en#tab-0-1),  
 
-The Megawatt capacity listed in the ECD database is only cited for plants which are currently active.  Since the MW capacity is not listed for retired coal plants, theoretically, we can estimate the Megawatt (MW) capacity from the reported $CO_2$ production.  Figure 1 below illustrates the variability in $CO_2$ production. A more definitive method of estimating MW from $CO_2$ production is provided by the ***Global Energy Monitor*** (GEM) which has published a method for estimating $CO_2$ emissions from coal plants [here](https://www.gem.wiki/Estimating_carbon_dioxide_emissions_from_coal_plants).  
+The Megawatt (MW) capacity listed in the ECD database is only cited for plants which are currently active.  Since the MW capacity is not listed for retired coal plants, theoretically, we can estimate the MW capacity from the reported $CO_2$ production.  Figure 1 below illustrates the variability in $CO_2$ production. A more definitive method of estimating MW from $CO_2$ production is provided by the ***Global Energy Monitor*** (GEM) which has published a method for estimating $CO_2$ emissions from coal plants [here](https://www.gem.wiki/Estimating_carbon_dioxide_emissions_from_coal_plants).  
 
 Four factors are used by the GEM to estimate the $CO_2$ emissions:  
 * Plant capacity     
