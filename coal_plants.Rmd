@@ -1,0 +1,108 @@
+---
+title: "CO2 Emissions"
+author: "Robert Cline"
+date: "10/23/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(sp)
+library(readxl)
+library(lubridate)
+library(janitor)
+library(tidyverse)
+library(here) 
+```
+
+```{r include=FALSE, echo=FALSE}
+### Import data from the ECD and select variables:  
+
+plant0 <- read_excel("2021-07-21_Europe_Beyond_Coal-European_Coal_Database_hc.xlsx", 
+    sheet = "Plant")
+
+## Use Row1 as Column Names
+names(plant0) <- plant0[1,]
+
+## Remove rows 1, 2 & 3
+plant1 <- plant0[-c(1,2,3),]
+
+## Clean Names
+plant2 <- plant1 %>% 
+  clean_names()
+
+## Rename and select Column variables
+plant <- plant2 %>%
+  rename(plant_id = ebc_plant_id, status=plant_status_gross, capacity=coal_capacity_open) %>% 
+  mutate(capacity = as.numeric(capacity)) %>% 
+ # select(plant_id, plant_name, country, fuel_type, latitude, longitude, status, capacity) %>% 
+ # filter(capacity >=800) %>% 
+ # filter(country=="Germany") %>% 
+  arrange(desc(capacity))
+
+# write_csv(plant, "E:/postgres/data/plant.csv")
+# View(plant)
+```
+
+```{r}
+plant <- plant[1:33] %>% 
+  select(-commissioning_year_of_first_unit, -"date_of_retirement_announcement", -"covered_by_country_phase_out_if_yes_country_phase_out_year",
+         -"coal_units_under_construction") %>% 
+  rename(retirement="announced_retirement_year_of_last_unit")
+  
+```
+
+
+
+
+```{r include=FALSE, echo=FALSE} 
+### Select Coal plants for Germany, the MW capacity and the CO2 emisson levels.
+plantMW <- plant %>% 
+  select("plant_id", "plant_name", country, "capacity","latitude", "longitude", "fuel_type", "announced_retirement_year_of_last_unit", "status", "coal_units_open", "x2005", "x2006", "x2007", "x2008", "x2009", "x2010", "x2011", "x2012", "x2013", "x2014", "x2015", "x2016", "x2017", "x2018", "x2019") #%>% 
+  # rename(status = "Plant status\r\n(gross)") %>% 
+  # rename(commissioned = "Commissioning year of first unit") %>% 
+  # rename(retirement ="(Announced) Retirement year of last unit") %>% 
+  # rename(MW = "Coal capacity open") %>% 
+  # rename(fuel_type = "Fuel type") %>% 
+
+## FILTER FOR GERMANY  
+#    filter(country=="Germany")
+```
+
+
+
+```{r echo=FALSE} 
+
+## Convert MW to numerical
+cols <- names(plantMW2)[2:17]
+
+plantMW3 <- plantMW2 %>% 
+  mutate_at(cols, as.numeric)
+```
+
+
+
+```{r echo=FALSE}
+
+### Pivot table from wide to long. 
+df0 <- plant %>%  # 3
+  select(plant_id, plant_name,longitude, latitude, "x2005", "x2006", "x2007", "x2008", "x2009", "x2010", "x2011", "x2012", "x2013", "x2014", "x2015", "x2016", "x2017", "x2018", "x2019")
+
+df_pvt <- df0 %>% 
+  pivot_longer(!1:4, names_to = "year",
+               values_to = "co2")
+``` 
+
+
+```{r}
+library(stringr)
+df_pvt2 <- df_pvt %>% 
+ filter(str_detect(string=year, pattern = "x")) %>% 
+  mutate(year=str_replace(year,"x","")) %>% 
+  data.frame()
+ 
+df_pvt2 <- df_pvt2 %>% 
+  mutate(year=as.numeric(year))
+```
+
