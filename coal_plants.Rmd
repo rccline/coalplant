@@ -16,6 +16,8 @@ library(tidyverse)
 library(here) 
 ```
 
+
+This is a list of coal plants that meet the criteria of 800MW as calculated by using the $CO_2$ production from the reported in teh European Coal Database.    
 ```{r include=FALSE, echo=FALSE}
 ### Import data from the ECD and select variables:  
 
@@ -45,6 +47,8 @@ plant <- plant2 %>%
 # View(plant)
 ```
 
+
+
 ```{r}
 plant <- plant[1:33] %>% 
   select(-commissioning_year_of_first_unit, -"date_of_retirement_announcement", -"covered_by_country_phase_out_if_yes_country_phase_out_year",
@@ -55,34 +59,7 @@ plant <- plant[1:33] %>%
 
 
 
-
-```{r include=FALSE, echo=FALSE} 
-### Select Coal plants for Germany, the MW capacity and the CO2 emisson levels.
-plantMW <- plant %>% 
-  select("plant_id", "plant_name", country, "capacity","latitude", "longitude", "fuel_type", "announced_retirement_year_of_last_unit", "status", "coal_units_open", "x2005", "x2006", "x2007", "x2008", "x2009", "x2010", "x2011", "x2012", "x2013", "x2014", "x2015", "x2016", "x2017", "x2018", "x2019") #%>% 
-  # rename(status = "Plant status\r\n(gross)") %>% 
-  # rename(commissioned = "Commissioning year of first unit") %>% 
-  # rename(retirement ="(Announced) Retirement year of last unit") %>% 
-  # rename(MW = "Coal capacity open") %>% 
-  # rename(fuel_type = "Fuel type") %>% 
-
-## FILTER FOR GERMANY  
-#    filter(country=="Germany")
-```
-
-
-
-```{r echo=FALSE} 
-
-## Convert MW to numerical
-cols <- names(plantMW2)[2:17]
-
-plantMW3 <- plantMW2 %>% 
-  mutate_at(cols, as.numeric)
-```
-
-
-
+This chunk to be modified when we understand which retirement criteria to use.
 ```{r echo=FALSE}
 
 ### Pivot table from wide to long. 
