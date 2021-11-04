@@ -1,61 +1,24 @@
 ---
-title: "Coal and Nodes"
+title: "CO2 Emissions"
 author: "Robert Cline"
-date: "10/20/2021"
+date: "10/23/2021"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
-library(knitr)
-knitr::opts_chunk$set(echo = TRUE,
-                      warning = FALSE,
-                      message = FALSE) 
-library(knitr)
-inline_hook <- function(x){
-#  paste0("**", x, "**")
-  if(is.numeric(x)){
-    formatted <- formatC(x, format="e", digits=2)
-  } else{
-    formatted <- x
-  }
-}
+knitr::opts_chunk$set(echo = TRUE)
 
-knit_hooks$set(inline=inline_hook)
-
-library(sp)
+# library(sp)
 library(readxl)
 library(lubridate)
 library(janitor)
 library(tidyverse)
 library(here) 
-library(sjPlot) # https://strengejacke.github.io/sjPlot/articles/tab_model_estimates.html
-
-## Latex basics https://www.math.mcgill.ca/yyang/regression/RMarkdown/example.html
+# library(grateful)
 ```
 
 
-Europe Beyond Coal campaign maintains ***The European Coal Database*** (ECD) which can be downloaded as an XLSX file [here](https://beyond-coal.eu/database/) under license documented on their download page.^[Database. (n.d.). Europe Beyond Coal. Retrieved October 14, 2021, from https://beyond-coal.eu/database/].    
-
-The ECD database (xlsx file) contains data from 2005 to 2019 for plants producing more than 15MW.  $CO_2$ emissions are given as EU Transaction Log (EUTL) in tonnes of $CO_2$ as defined by the European Commission of Climate Action [handbook](https://ec.europa.eu/clima/eu-action/eu-emissions-trading-system-eu-ets/union-registry_en#tab-0-1),  
-
-The Megawatt (MW) capacity listed in the ECD database is only cited for plants which are currently active.  Since the MW capacity is not listed for retired coal plants, theoretically, we can estimate the MW capacity from the reported $CO_2$ production.  Figure 1 below illustrates the variability in $CO_2$ production. A more definitive method of estimating MW from $CO_2$ production is provided by the ***Global Energy Monitor*** (GEM) which has published a method for estimating $CO_2$ emissions from coal plants [here](https://www.gem.wiki/Estimating_carbon_dioxide_emissions_from_coal_plants).  
-
-Four factors are used by the GEM to estimate the $CO_2$ emissions:  
-* Plant capacity     
-* Plant capacity factor  
-* Heat rate of plant(an expression of efficiency)  
-* Emissions factor of the type of coal used  
-* Formula: CO2 (in millions of tonnes) = capacity * capacity factor * heat rate * emission factor * 9.2427 x 10^-12.    
-
-*Resources*  
-* [Basemaps from DE Bundesampt](https://gdz.bkg.bund.de/index.php/default/digitale-geodaten.html)    
-* [Streamlit - app for searching basemaps](https://www.youtube.com/watch?v=7Yu1OICHGec)  
-  
-
-
-
-
-
+This is a list of coal plants that meet the criteria of 800MW as calculated by using the $CO_2$ production from the reported in teh European Coal Database.    
 ```{r include=FALSE, echo=FALSE}
 ### Import data from the ECD and select variables:  
 
@@ -76,9 +39,10 @@ plant2 <- plant1 %>%
 plant <- plant2 %>%
   rename(plant_id = ebc_plant_id, status=plant_status_gross, capacity=coal_capacity_open) %>% 
   mutate(capacity = as.numeric(capacity)) %>% 
-  select(plant_id, plant_name, country, fuel_type, latitude, longitude, status, capacity) %>% 
+ # select(plant_id, plant_name, country, fuel_type, latitude, longitude, status, capacity) %>% 
  # filter(capacity >=800) %>% 
-  filter(country=="Germany") %>% 
+ # filter(country=="Germany") %>% 
+  rename(retirement="announced_retirement_year_of_last_unit") %>% 
   arrange(desc(capacity))
 
 # write_csv(plant, "E:/postgres/data/plant.csv")
@@ -87,178 +51,54 @@ plant <- plant2 %>%
 
 
 
-
-```{r include=FALSE, echo=FALSE} 
-### Select Coal plants for Germany, the MW capacity and the CO2 emisson levels.
-plantMW <- plant1 %>% 
-  select(Country, "Fuel type", "Commissioning year of first unit", "(Announced) Retirement year of last unit", "Fuel type", "Plant status\r\n(gross)", "Coal capacity open", "2005", "2006", "2007", "2008", "2009", "2010", "2011", "2012", "2013", "2014", "2015", "2016", "2017", "2018", "2019") %>% 
-  rename(status = "Plant status\r\n(gross)") %>% 
-  rename(commissioned = "Commissioning year of first unit") %>% 
-  rename(retirement ="(Announced) Retirement year of last unit") %>% 
-  rename(MW = "Coal capacity open") %>% 
-  rename(fuel_type = "Fuel type") %>% 
-
-## FILTER FOR GERMANY  
-    filter(Country=="Germany")
-```
-
-```{r include=FALSE, echo=FALSE}
-
-## Select MW by Fuel Type for each year; drop_na
-
-plantMW2 <- plantMW %>% 
-  select("fuel_type", "MW", "2005", "2006", "2007", "2008", "2009", "2010", "2011", "2012", "2013", "2014", "2015", "2016", "2017", "2018", "2019") %>% 
-  drop_na()
-
-
- 
-```
-
-```{r echo=FALSE} 
-
-## Convert MW to numerical
-cols <- names(plantMW2)[2:17]
-
-plantMW3 <- plantMW2 %>% 
-  mutate_at(cols, as.numeric)
+```{r}
+plant <- plant[1:33] %>% 
+  select(-commissioning_year_of_first_unit, -"date_of_retirement_announcement", -"covered_by_country_phase_out_if_yes_country_phase_out_year",
+         -"coal_units_under_construction") # %>% 
+#  rename(retirement="announced_retirement_year_of_last_unit")
+  
 ```
 
 
 
+This chunk to be modified when we understand which retirement criteria to use.
 ```{r echo=FALSE}
 
 ### Pivot table from wide to long. 
-df <- plantMW3 %>% 
-  pivot_longer(!MW:fuel_type, names_to = "year",
+df0 <- plant %>%  # 3
+  select(plant_id, plant_name, owner, fuel_type, retirement, longitude, latitude, "x2005", "x2006", "x2007", "x2008", "x2009", "x2010", "x2011", "x2012", "x2013", "x2014", "x2015", "x2016", "x2017", "x2018", "x2019", "x2020")# %>% 
+#  mutate(retirment=as.numeric(retirement))
+
+df0$retirement
+
+df0 <- plant %>% 
+  select(plant_id, fuel_type, capacity, retirementYr, "x2005", "x2006", "x2007", "x2008", "x2009", "x2010", "x2011", "x2012", "x2013", "x2014", "x2015", "x2016", "x2017", "x2018", "x2019", "x2020")
+
+df_pvt <- df0 %>% 
+  pivot_longer(!1:7, names_to = "year",
                values_to = "co2")
-```
-
-
-
-```{r echo=FALSE, include=FALSE}
-#plantMW3 %>% 
-  # drop_na() %>% 
-lm(co2 ~ fuel_type + MW, data = df)
-```
- 
-
-
-
-The objective is to select retired or retiring coal plants based on MW capacity greater than 800 MW.  Since the MW capacity is not cited in the dataset for retired coal plants, we can estimate the capacity in MW by $CO_2$ production.  The graph below shows $CO_2$ production by fuel type. 
-
-The calculations below, based upon linear models for coal production is as follows:
-
-
- 
-```{r fig1, fig.cap="Figure 1: CO2 output from German coal plants by fuel type.", include=TRUE, echo=FALSE}
-ggplot(df, aes(x=MW, y=co2, color=fuel_type)) +
-  geom_point() +
-  geom_smooth(method = "lm", se=FALSE) +
-  labs(y = "Tons of CO2") +
-  labs(caption = "Data from European Coal Database")
-```
-
-
-### Fitting the linear model for *hard coal*
-```{r fig2, fig.cap="Figure 2: CO2 output from German hard coal plants.", echo=FALSE}
-mw3 <- df %>% 
-  filter(fuel_type=="hard coal")
-ggplot(mw3, aes(x=MW, y=co2, color="red")) +
-  geom_point() +
-  geom_smooth(method = "lm", se=FALSE) +
-  labs(y = "Tons of CO2 from hard coal") +
-  labs(caption = "Data from European Coal Database")
-```
-
-
-
-```{r echo=FALSE}
-
-# library(sjPlot) 
-# http://www.endmemo.com/rfile/sjplot-themes.php
-# https://strengejacke.github.io/sjPlot/articles/tab_model_estimates.html
-fit <-   lm(co2 ~ MW, data = mw3) 
-sumfit <- summary(fit)
- 
-sjPlot::tab_model(fit, show.se = TRUE, title="Table 1: Tons of CO2 production from hard coal by MW")
-```
- 
-<br> 
-```{r echo=FALSE, include=FALSE}
-#Extract the coef matrix and
-# get Y intercept and slope
-
-co=coef(summary(fit))
-co[,1]
-
-# plot(predict(fit))
-```
- 
-```{r echo=FALSE, eval=FALSE}
-485067.390 + 2836.533*900
-# ggplot(data = df, aes(MW)) + geom_histogram()
-```
-
-```{r eval=TRUE, echo=FALSE}
-megawatts = data.frame(MW=800)
-co2_800mw <- predict(fit, megawatts)
-```
- 
-The linear model $lm(co2 ~ MW, data = mw3)$ Predicts `r co2_800mw` tons of $CO_2$ produced by 800 MW coal plants using hard coal as fuel.  
-
-
-```{r eval=FALSE, echo=FALSE}
-
-ggplot(data = df, aes(co2)) + geom_histogram(bins=30)
 ``` 
 
-### Fitting the linear model for *lignite*
-```{r fig3, fig.cap="Figure 3: CO2 output from German lignite plants.", echo=FALSE}
-mw4 <- df %>% 
-  filter(fuel_type=="lignite")
-ggplot(mw4, aes(x=MW, y=co2)) +
-  geom_point() +
-  geom_smooth(method = "lm", se=FALSE) +
-  labs(y = "Tons of CO2 from Lignite") +
-  labs(caption = "Data from European Coal Database")
-```
 
-
-
-```{r echo=FALSE}
-
-# library(sjPlot) 
-# http://www.endmemo.com/rfile/sjplot-themes.php
-# https://strengejacke.github.io/sjPlot/articles/tab_model_estimates.html
-fitl <-   lm(co2 ~ MW, data = mw4) 
-sumfitl <- summary(fitl)
+```{r}
+library(stringr)
+df_pvt2 <- df_pvt %>% 
+ filter(str_detect(string=year, pattern = "x")) %>% 
+  mutate(year=str_replace(year,"x","")) %>% 
+  data.frame()
  
-sjPlot::tab_model(fitl, show.se = TRUE, title="Table 2: Tons of CO2 production from lignite by MW")
-```
- 
-<br> 
-```{r echo=FALSE, include=FALSE}
-#Extract the coef matrix and
-# get Y intercept and slope
-
-col=coef(summary(fitl))
-col[,1]
-
-# plot(predict(fit))
-```
- 
-```{r echo=FALSE, eval=FALSE}
-# 485067.390 + 2836.533*900
-# ggplot(data = df, aes(MW)) + geom_histogram()
+df_pvt2 <- df_pvt2 %>% 
+  mutate(year=as.numeric(year))
 ```
 
-```{r eval=TRUE, echo=FALSE}
-megawattsl = data.frame(MW=800)
-co2_800mwl <- predict(fitl, megawattsl)
+```{r}
+cite_packages()
 ```
- 
-### Summary:
-**Hard coal**: The linear model predicts that $`r co2_800mw`$ tons of $CO_2$ is produced by 800 MW coal plants using hard coal as fuel.  
-**Lignite:**: The linear model predicts that $`r co2_800mwl`$ tons of $CO_2$ is produced by 800 MW coal plants using lignite as fuel. 
 
+`r cite_packages()`
+
+```{r}
+rmd <- create_rmd(cite_packages())
+
+```
 
