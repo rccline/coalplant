@@ -1,0 +1,351 @@
+---
+author: Robert Cline
+date: '2021-10-30'
+title: Coal Plant retirement
+output:
+  html_document:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning=FALSE, message=FALSE)
+
+# library(sp)
+library(readxl)
+library(lubridate)
+library(janitor)
+library(tidyverse)
+library(here) 
+library(grateful)
+library(gt)
+library(knitr)
+```
+
+This report is a list of European coal plants capable of producing 800 MW of power which have been scheduled for closure between the years 2018 to 2029, inclusive.  
+
+The data source for this report comes from the [European Coal Database (ECD)](https://beyond-coal.eu/database/).  The results are listed in Table 1, below.   
+
+```{r include=FALSE, echo=FALSE}
+### Import data from the ECD and select variables:  
+
+plant0 <- read_excel("2021-07-21_Europe_Beyond_Coal-European_Coal_Database_hc.xlsx", 
+    sheet = "Plant")
+
+## Use Row1 as Column Names
+names(plant0) <- plant0[1,]
+
+## Remove rows 1, 2 & 3
+plant1 <- plant0[-c(1,2,3),]
+
+## Clean Names
+plant2 <- plant1 %>% 
+  clean_names()
+
+## Rename and select Column variables
+plant <- plant2 %>%
+  rename(plant_id = ebc_plant_id, status=plant_status_gross, capacity=coal_capacity_open) %>% 
+  mutate(capacity = as.numeric(capacity)) %>% 
+select(1:33) %>% 
+ # select(plant_id, plant_name, country, fuel_type, latitude, longitude, status, capacity) %>% 
+ # filter(capacity >=800) %>% 
+ # filter(country=="Germany") %>% 
+### ADD THIS REANAE
+  rename(retirementYR= "announced_retirement_year_of_last_unit") %>% 
+  arrange(desc(capacity))
+
+# write_csv(plant, "E:/postgres/data/plant.csv")
+# View(plant)
+```
+
+### SECTION 1:  Lignite Coal Plants selected for closure.  
+
+The ECD database is missing MW capacity data for some lignite plants within the reporting period.  Therefore, where data is missing, the maximum $CO_2$ emission level for each plant reporting emissions was used to predict MW capacity for that plant. These emissions were used as a predictor for MW capacity only where the MW capacity was not reported.   
+
+```{r data_prep}
+
+## DATA PREPARATION  -------------------------------------
+
+## Replace NA with 0 for CO2 emissions
+plant <- plant %>% 
+  mutate_at(c(18:33), ~replace(., is.na(.),0))  
+
+## Find max CO2 emissions
+plant$rowwisemax <- plant %>% select(x2005:x2020) %>% pmap(pmax) %>% as.numeric 
+
+plant <- plant %>% 
+  filter(rowwisemax >0)
+# If Lignite 
+# If hard coal 
+
+
+```
+
+
+
+
+```{r retirementYr, eval=FALSE}
+
+### Announced Retirement Year 
+plantyr <- plant_capacity %>% 
+#  rename(retirementYR= "announced_retirement_year_of_last_unit") %>% 
+  select(plant_id, plant_name, owner, fuel_type, retirementYR, capacity, rowwisemax) %>% 
+  filter(!is.na(retirementYR)) %>% 
+  filter(retirementYR >2018 & retirementYR<2030) %>% 
+ # filter(capacity >799) %>% 
+  arrange(retirementYR)
+```
+
+### Predicting of lignite plant's MW Capacity  
+
+Table 1 below summarizes those lignite and hard coal plants with the production capacity of 800 MW or greater for the years 2018 to 2029.
+
+```{r lm_lignite, include=FALSE}
+# create a linear model to fit CO2 emissions as a predictor of MW Capacity
+
+lignite <- plant %>% 
+  filter(fuel_type == "lignite") %>% 
+# filter(rowwisemax>0)  %>% 
+  filter(!is.na(capacity))
+#  filter(country=="Germany")
+  
+fitlignite <- lm(capacity ~ rowwisemax, data=lignite)
+
+summary(fitlignite)
+
+
+
+
+
+# predict_MW_Lignite <- lignite %>% 
+#   mutate(predict = predict(fitlignite, data.frame(rowwisemax=rowwisemax))) %>% 
+#   mutate(MW=round(predict,digits=0)) %>%
+#   select(-predict) %>% 
+# filter(MW > 799) 
+# 
+ ## gt(predict_MW_Lignite)
+
+
+``` 
+
+
+
+
+### Summary of lignite coal plant power capacity in MW from known CO2 emissions
+The linear regression model predicts that a lignite coal plant producing 5.74e+06 tonnes of $CO_2$ emissions will generate 800 MW of power capacity.  
+```{r}
+ligniteMW <- plant %>% 
+  filter(fuel_type == "lignite")
+ligniteMW$MW <-  predict(fitlignite, data.frame(ligniteMW)) 
+
+lignite800 <- ligniteMW %>% 
+  filter(MW >799) %>% 
+  filter(retirementYR >2017 & retirementYR < 2030)
+
+## find emissions for predicting 800 MW plant
+# x=0.0001211
+# y <- 104.8+(0.0001211*5740710)
+# (800-104.8)/0.0001211 = 5740710
+```
+
+
+```{r}
+# temp <- ligniteMW %>% 
+#   select(plant_id, capacity, MW ) 
+
+## If capacity is NA, then use MW to select MW capacity, otherwise, use "capacity" from EcD table.  
+
+ligniteMW$maxMW <- ligniteMW %>% select(capacity, MW) %>% pmap(pmax) %>% as.numeric 
+   
+ligniteMW800 <- ligniteMW %>%
+  select(plant_id, plant_name, country, region, fuel_type, owner, latitude, longitude, retirementYR, status, coal_units_open, capacity, MW, rowwisemax) %>% 
+  filter(
+    if(capacity=="NA") {
+      MW>=800} else{
+      capacity >= 800})
+
+```
+
+
+
+
+```{r plot_lignite, error=TRUE, eval=FALSE}
+## This code is problematic.  code chunk lm_hard_coal is exactly the same with a object hardCoal.  It prints.  
+
+## lm_lignite will run on its own but will not knit.  Upon knitting I get the error:  
+# 'lignite' not found.  I can force into a data.frame or into a tibble.  Result = No joy.  
+
+## Solution not found:  
+### Tried error=TRUE
+### cat(ggplot_object)
+### print(ggplot_object)
+ggplot(ligniteMW, aes(x=rowwisemax, y=capacity))+
+  geom_smooth(method=lm) +
+  ggtitle("MW Power Capacity by CO2 emissions", subtitle = "Fuel Type:  Lignite") +
+  xlab("Tonnes of CO2 Emission per Year")+
+  ylab("Power in MW")+
+  geom_vline(xintercept=5740710, linetype="solid", color="red", size=1.0) +
+   annotate(geom = 'text', label = '5.74e+06 Tonnes of CO2', x = 7000000, y = 4500, hjust = 0, vjust = 1)
+
+## This plot will not knit.  Therefore image has been saved and then embedded.
+```
+
+![Figure 1. Prediction of MW Capacity as a function of CO2 Emissions. Abline equivlent to 800MW](img/lm_lignite.png)
+  
+
+<br> 
+
+```{r echo=FALSE}
+# fitlignite <- lm(co2 ~ MW, data=lignite)
+sjPlot::tab_model(
+  fitlignite,
+  show.r2 = TRUE,
+  show.icc = FALSE,
+  show.re.var = FALSE,
+  p.style = "scientific",
+  emph.p = TRUE, 
+  digits=6) #, include to save as html
+  # file = "Downloads/temp.html")
+  
+```
+
+<br>  
+
+ 
+### SECTION 2:  Hard coal plants selected for closure
+
+The ECD database included MW production capacity for those hard coal plants selected for closure within the years 2018 and 2029, inclusive.  *Figure 2* illustrates the power capacity in MW as a function of $CO_2$ emissions as a comparison to lignite emissions for illustrative purposes only.  $CO_2$ emissions were not used to predict MW capacity for coal plants as a selection criterion.  
+**Table 1**  below summarizes both hard coal and lignite plants scheduled for closure meeting the selection criteria.   
+
+```{r lm_hardCoal, include=FALSE}
+# create a linear model to fit CO2 emissions as a predictor of MW Capacity
+
+hardCoal <- plant %>% 
+  filter(fuel_type == "hard coal") 
+# filter(rowwisemax>0)  %>% 
+
+# NOTE:  THERE ARE NO HARD COAL with NA/s  filter(!is.na(capacity))
+# There is no need to calculate MW for hard coal; All MW's are given
+
+#  filter(country=="Germany")
+  
+fithardCoal <- lm(capacity ~ rowwisemax, data=hardCoal)
+
+summary(fithardCoal)
+
+
+
+
+
+# predict_MW_Lignite <- lignite %>% 
+#   mutate(predict = predict(fitlignite, data.frame(rowwisemax=rowwisemax))) %>% 
+#   mutate(MW=round(predict,digits=0)) %>%
+#   select(-predict) %>% 
+# filter(MW > 799) 
+# 
+#  ## gt(predict_MW_Lignite)
+
+
+``` 
+
+
+
+
+### Predict hard coal plant power capacity in MW from known CO2 emissions
+The linear model predicts that a coal plant producing 5.74e+06 tonnes of $CO_2$ emissions will generate 800 MW of power capacity.  The reader will note that MW capacity was provided for the hard coal plants.  The estimates from $CO_2$ emissions were not used to select hard coal plants but is provided here for reference and comparison to lignite plant $CO_2$ emissions.  
+```{r}
+# hardCoalMW <- plant %>% 
+#   filter(fuel_type == "hard coal")
+# ligniteMW$MW <-  predict(fitlignite, data.frame(hardCoalMW)) 
+
+
+## find emissions for predicting 800 MW plant
+# x=0.0001211
+# y <- 181.55768+(0.0001913*7514950)
+# (800-181.55768)/0.0001913 = 3232840
+```
+
+
+<br>  
+
+```{r plot_hardCoal, error=TRUE, eval=FALSE}
+
+
+plant %>% 
+  filter(fuel_type=="hard coal") %>% 
+  mutate(capacity=as.numeric(capacity)) %>% 
+ggplot(., aes(x=rowwisemax, y=capacity))+
+  geom_smooth(method=lm) +
+  ggtitle("MW Capacity by CO2 emissions", subtitle = "Fuel Type:  Hard Coal")+
+  xlab("Tonnes of CO2 Emission per Year")+
+  ylab("Power in MW")+
+  geom_vline(xintercept=3232840, linetype="solid", color="red", size=1.0) +
+   annotate(geom = 'text', label = '2.23e+06 Tonnes of CO2', x = 4000000, y = 4500, hjust = 0, vjust = 1)
+
+## This plot will not knit.  Therefore image has been saved and then embedded.
+``` 
+
+
+
+![Figure 2. Prediction of MW Capacity as a function of CO2 Emissions. Abline equivalent to 800MW](img/lm_hard_coal.png).   
+*Note: This estimate was not used in plant selection.  ECD table provided MW capacity for hard coal plants.* 
+
+Figure 2. Prediction of MW Capacity as a function of CO2 Emissions. Abline equivalent to 800MW  
+ 
+<br> 
+
+
+```{r echo=FALSE}
+# fitlignite <- lm(co2 ~ MW, data=lignite)
+sjPlot::tab_model(
+  fithardCoal,
+  show.r2 = TRUE,
+  show.icc = FALSE,
+  show.re.var = FALSE,
+  p.style = "scientific",
+  emph.p = TRUE, 
+  digits=6) #, include to save as html
+  # file = "Downloads/temp.html")
+  
+```
+
+
+```{r include=FALSE}
+hardCoal <- hardCoal %>% 
+  mutate(MW=capacity)
+
+coal <- rbind(hardCoal, lignite800) 
+
+coal <- coal %>% 
+  filter(!is.na(retirementYR)) %>%
+  mutate(retirementYR=as.numeric(retirementYR)) %>% 
+  select(plant_id, plant_name, country, region, fuel_type, owner, retirementYR, capacity, MW, rowwisemax, latitude, longitude) %>% 
+  rename(co2MAX=rowwisemax) %>%
+#  filter(!is.na(capacity)) %>% 
+  mutate(capacity = as.numeric(capacity)) %>% 
+  filter(MW>799) %>%
+   filter(retirementYR >2017 & retirementYR < 2030)
+
+
+ 
+``` 
+
+<br>  
+**Table 1:  800 MW EU coal plants closing between the years 2018 and 2029, inclusive.**  
+*Note:  MW are predicted from linear models, plant capacity in MW was provided by ECD database.*
+```{r}  
+
+coal_table1 <-  coal %>% 
+  select(plant_id, plant_name, owner, country, fuel_type, MW, capacity) %>%
+  mutate(MW=round(MW,0)) %>% 
+#  rename(MW=capacity) %>% 
+  arrange(plant_id)
+
+  DT::datatable(coal_table1, options = list(autoWidth = TRUE), 
+               
+                filter = list(
+  position = 'top', clear = FALSE)) #  %>%   # Include this line of code and the next to create htmlwidget.
+
+# htmlwidgets::saveWidget(., "table_MW.html")
+```
+
+
