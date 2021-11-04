@@ -7,10 +7,10 @@ The data source for this project comes in part from the [*European Coal Database
 *Phaseout period*"  Coal plants designated for phaseout between January 1, 2018 through to the end of year 2029 are evaluated.
 
 
-Since the ECD database does not contain the $CO_2$ levels which were produced when the retired plants were in operation, a linear model derived using data fromthe ECD database are used to estimate the plant MW capacity by analyzing the CO2 production from existing plant operations at the threshold of 800 MW. 
+Since the ECD database does not contain the MW capacity for some of the lignite plants, MW capacity was predicted for those plants missing data using the $CO_2$ emission levels which were produced when the retired plants were in operation. 
 
-The first document in this repository is *coal_database.Rmd* which is an analysis of the ECD data to estimate CO2 levels for lignite and hard coal plants which produce 800 MW of power. 
 
-*Residuals.Rmd* applies linear regression models to predict power capacity predicated on $CO_2$ emissions.  The residuals of the linear regression models are analyzed to assess goodness fit of the models to determine if the models are a reasonable predictor for calcualating $CO_2$ levels to estimate power capacity to select power plants to meet the inclusion criteria.   
+As plant closure dates may change, the data published in the ECD database will need to be reevaluated periodically as more coal plants are selected for closure or if closure dates are extended.  
 
-As plant closure dates may change, the data published in the ECD database will need to be reevaluated periodically.  
+The file *Selected_EU_coal_plants.Rmd* contains a list of all coal plants within the ECD database which meet the selection criteria.  
+
