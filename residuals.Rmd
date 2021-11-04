@@ -1,5 +1,5 @@
 ---
-title: "Coal Residuals"
+title: "Coal Plants Selection Criteria"
 author: "Robert Cline"
 date: "10/21/2021"
 output:
@@ -7,7 +7,7 @@ output:
     toc: true
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, echo=FALSE, message=FALSE, warning=FALSE}
 knitr::opts_chunk$set(echo = FALSE,
                       warning=FALSE,
                       message = FALSE)
@@ -16,9 +16,100 @@ library(tidyverse)
 library(ggplot2)
 ``` 
 
-```{r}
+```{r echo=FALSE}
 df <- read_csv("df.csv")
 ```
+
+#### Coal Plants  
+Coal Plants included in this analysis are selected based upon the following Criteria obtained from the [European Coal Database (ECD)](https://beyond-coal.eu/database/)  database:^[1. Under license an Open Database License (ODbL) v1.0. The full license can be found [here](https://opendatacommons.org/licenses/odbl/1-0/).]  
+*  Greater than 800 MW per year.  
+*  Closing dates between January 2018 up to and including planned closings in the year 2029. 
+
+<br> 
+
+ 
+```{r echo=FALSE, include=FALSE} 
+
+## https://www.learnbymarketing.com/tutorials/linear-regression-in-r/ 
+
+lignite <- df %>% 
+  filter(fuel_type == "lignite")  
+  
+fitlignite <- lm(co2 ~ MW, data=lignite)
+
+summary(fitlignite)
+
+predict(fitlignite, data.frame(MW=800))
+```
+
+#### Lignite Plants  
+
+The $CO_2$ emissions for lignite are predicted based upon the formula:   
+  *fit* <- lm($CO_2$ ~ MW, data= lignite) where lignite is the tonnes of $CO_2$ production per year from lignite fuel type.    
+
+Lignite plants are selected based upon the estimation of $CO_2$ emissions greater than **`r predict(fitlignite, data.frame(MW=800))` tonnes** of coal per year which is the prediction of 800 MW per year production capacity.   
+
+```{r echo=FALSE} 
+# Support for sjPlot https://github.com/Rapporter/pander/issues/298 
+
+# fitlignite <- lm(co2 ~ MW, data=lignite)
+sjPlot::tab_model(
+  fitlignite,
+  title = "CO2 Emissions as MW Predictor for Lignite Coal Plant",
+  show.r2 = TRUE,
+  show.icc = FALSE,
+  show.re.var = FALSE,
+  p.style = "scientific",
+  emph.p = TRUE) #, include to save as html
+#  file = "Downloads/temp.html")
+
+```
+<br>
+
+
+
+
+#### Hard Coal Plants 
+
+ 
+```{r echo=FALSE, include=FALSE} 
+
+## https://www.learnbymarketing.com/tutorials/linear-regression-in-r/ 
+
+hardCoal <- df %>% 
+  filter(fuel_type == "hard coal")  
+  
+fithardCoal <- lm(co2 ~ MW, data=hardCoal)
+
+summary(fithardCoal)
+
+predict(fithardCoal, data.frame(MW=800))
+```
+
+The $CO_2$ emissions for lignite are predicted based upon the formula:   
+  *fit_hardCoal* <- lm($CO_2$ ~ MW, data= hardCoal) where lignite is the tonnes of $CO_2$ production per year from hard coal fuel type.    
+
+Hard coal coal plants are selected based upon the estimation of $CO_2$ emissions greater than **`r predict(fithardCoal, data.frame(MW=800))` tonnes** of coal per year representing 800 MW and greater production capacity.   
+
+```{r echo=FALSE} 
+# Support for sjPlot https://github.com/Rapporter/pander/issues/298 
+
+# fitlignite <- lm(co2 ~ MW, data=lignite)
+sjPlot::tab_model(
+  fithardCoal,
+  title = "CO2 Emissions as MW Predictor for Coal Plant with hard coal fuel type",
+  show.r2 = TRUE,
+  show.icc = FALSE,
+  show.re.var = FALSE,
+  p.style = "scientific",
+  emph.p = TRUE) #, include to save as html
+#  file = "Downloads/temp.html")
+
+```
+<br>
+
+### Analysis of Residuals of fitted linear models 
+The analyis of the residuals of the fitted linear models suggest that the linear models represent, not perfect, but reasonable predictors of $CO_2$ emissions to predict a coal plant's power capacity, particularly within the interquartile range.  
 
 ### Hard Coal Residuals
 ```{r eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
@@ -38,7 +129,11 @@ ggplot(df, aes(x = MW, y = co2)) +
 ```
 
 
-```{r eval=TRUE}
+
+
+```{r eval=TRUE} 
+# summary(hc)
+
 hc <- df %>% 
   filter(fuel_type=="hard coal")
 
