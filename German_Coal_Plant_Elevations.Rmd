@@ -1,0 +1,86 @@
+---
+title: ''
+author: "Robert Cline"
+date: "11/17/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message=FALSE) 
+
+library(tidyverse)
+library(ggthemes)  # for a mapping theme
+library(ggalt)  # for custom map projections
+library(ggrepel)  # for annotations
+library(viridis)  # for nice colours
+library(here)  
+library(ggplot2)
+```
+
+```{r}
+# MAPS ----
+# Get the shape of North America
+germany <- map_data("world", region = c("Germany"))
+
+```
+
+```{r}
+library(readxl)
+plant_elev0 <- read_excel("plant_elevation_meters.xlsx")
+
+
+plant_elev <- plant_elev0 %>%
+  select(ID, plant_name, latitude, longitude, plant_elevation )  
+
+# Elevation Source:  GPS Visualizer. (n.d.). Retrieved November 17, 2021, from https://www.gpsvisualizer.com/ 
+
+
+```  
+
+
+```{r}
+ggplot() +
+    geom_map(map = germany, data = germany,
+             aes(long, lat, map_id = region), 
+             color = "gray80", fill = "gray80", size = 0.3) +
+    # Add points for the site locations
+   geom_point(data = plant_elev, 
+               aes(x = longitude, y = latitude, fill=plant_elevation),
+              alpha = 0.8, size=4, colour = "grey30",
+              shape=21) +
+ theme_map() +
+    # Putting the legend at the bottom
+    theme(legend.position = "bottom") + 
+  
+   geom_label_repel(data = plant_elev,
+                     aes(x = longitude, y = latitude,
+                         label = plant_name),
+		     # Setting the positions of the labels
+                     box.padding = 1, size = 4, nudge_x = 1, nudge_y = 1) +
+  labs(fill = "Elevation (m)") +
+    scale_fill_viridis(option = "magma", direction = -1, begin = 0.2) +
+  # ggtitle("German Coal Plant Elevation in Meters") 
+   labs(title = "German Coal Plant Elevation in Meters", 
+      # subtitle = "Subtitle here", 
+       caption = "GPS Visualizer. (n.d.) from https://www.gpsvisualizer.com/ 
+.") +
+  theme(aspect.ratio = 1)
+
+
+
+``` 
+
+```{r include=TRUE}
+
+library(gt)  
+
+plant_elev %>% 
+  select("Plant Name"= plant_name, "Elevation (m)" = plant_elevation) %>% 
+  gt()  %>% 
+   tab_header(
+    title = "Coal Plant Elevation (meters)",
+    subtitle = "GPS Visualizer. (n.d.). Retrieved from https://www.gpsvisualizer.com/"
+  )
+
+```
+
