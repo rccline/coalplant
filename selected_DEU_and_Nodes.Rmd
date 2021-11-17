@@ -1,0 +1,68 @@
+---
+title: "German Coal Plants and Transmission Nodes"
+author: ""
+date: "2021-11-15"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE) 
+
+library(tidyverse)
+library(gt)
+
+```
+
+```{r}
+
+## Import selected plants with transmission nodes  
+
+library(readxl)
+intersection_30km <- read_excel("./data/intersection_30km.xlsx", 
+    col_types = c("numeric", "text", "text", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "text", "text", "text", 
+        "text", "text", "text", "numeric", 
+        "text", "numeric", "numeric", "numeric", 
+        "numeric"))
+View(intersection_30km)
+```
+
+## German Coal Plants
+
+-   The data source for this report comes from the [European Coal Database (ECD)](https://beyond-coal.eu/database/).\
+-   Coal plant data are current as of 21/7/2021. 
+  
+
+![](img/DEU-CoalPlants-TransmissionNodes%2030km%20Buffer.PNG)  
+Figure 1.  Coal Plants > 800 capacity retiring before 2030 (green) with Transmission Nodes (red) within 30 km.  
+*Note: Click on power station for weblinks*
+
+
+\pagebreak 
+
+## Transmission Node data source:
+
+-   [ENTSO-E Transmission System Map](https://www.entsoe.eu/data/map/)\
+-   Coordinates for the transmission node locations come from the ENTSO-E map. The ENTSO-E map is an interactive map which illustrates all transmission lines designed for voltages equal to or higher than 220kV. The map also depicts generation statios with neg generation capacity greater than 100MW. The data are correct to 1/1/2019.\
+-   The map legend explains that the network elements are not located at their real geographic location. The exact location of these nodes should be verified by further inquiry.
+
+```{r}
+plants <- intersection_30km %>% 
+  select(plant_id, plant_name, fuel_type, owner, name) %>% 
+  mutate("Transmission Node ID"=name, "Plant ID"=plant_id, "Plant Name"= plant_name) 
+
+plants %>% 
+   select("Plant ID", "Plant Name", owner, fuel_type, "Transmission Node ID") %>% 
+#  dplyr::arrange("Plant ID") %>% 
+#  gt() %>% 
+   gt(rowname_col = "Plant ID") %>%
+  tab_row_group(
+    label = "Plant Name",
+    rows = matches("*") # ("^[0-9]")
+  )
+
+  
+  
+```
+*Note: Table contains weblinks*
