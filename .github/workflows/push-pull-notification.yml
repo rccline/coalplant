@@ -1,20 +1,21 @@
-name: push-pull-notification
-on: 
+name: Email Notification
+
+on:
   push:
     branches:
-      - 'master'
-  
-  pull_request:
-      branches: 
-      - 'master'
+      - master
+
 jobs:
   email:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Email Action
-      uses: sally/email-action@v1
-      with:
-        recipients: "rccline@fastmail.fm"
-        subject: Pull or Push Request was made
-        body: A pull request or a push was made on the master branch.
+      - name: Send email
+        uses: actions/email@v2
+        with:
+          subject: 'GitHub Activity'
+          body: |
+            ${{ github.actor }} pushed ${{ github.event.commits.length }} commits.
+
+            ${{ toJson(github.event.commits) }}
+          to:
+            - recipient@example.com
