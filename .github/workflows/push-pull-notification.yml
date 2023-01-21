@@ -10,16 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Send email
-#        uses: rccline/action-send-mail@v1.4.0
-#        env:
-#          FROM: github-actions@github.com
-#          TO: 'rccline@fastmail.fm'
-#      - name: Send email
-        if: github.event.commits.length > 0
         uses: rccline/action-send-mail@v1.4.0
-             env:
-          FROM: github-actions@github.com
-          TO: 'rccline@fastmail.fm'
-          SUBJECT: 'GitHub Action - ${{ github.event.head_commit.message }}'
-          BODY: 'GitHub Action - ${{ github.event.head_commit.message }}'
-        
+        env:
+              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+             
+    
