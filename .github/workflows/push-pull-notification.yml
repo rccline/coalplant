@@ -18,4 +18,4 @@ jobs:
 
             ${{ toJson(github.event.commits) }}
           to:
-            - recipient@example.com
+            - rccline@fastmail.fm 
