@@ -1,1 +1,6 @@
 This is a test of github actions 
+
+The following is an email template... If you can set it up.  
+I need to set up the secret key, but cannot discover how to reach the settings on github.
+It looks different than the code referenced in waylon's repo. 
+https://waylonwalker.com/send-email-with-github-actions/
