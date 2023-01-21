@@ -1,0 +1,20 @@
+name: push-pull-notification
+on: 
+  push:
+    branches:
+      - 'master'
+  
+  pull_request:
+      branches: 
+      - 'master'
+jobs:
+  email:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Email Action
+      uses: sally/email-action@v1
+      with:
+        recipients: "rccline@fastmail.fm"
+        subject: Pull or Push Request was made
+        body: A pull request or a push was made on the master branch.
