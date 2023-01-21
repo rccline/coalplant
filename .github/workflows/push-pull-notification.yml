@@ -11,7 +11,3 @@ jobs:
     steps:
       - name: Send email
         uses: rccline/action-send-mail@v1.3.0
-        env:
-          FROM: github-actions@github.com
-          TO: 'rccline@fastmail.fm'
-     
