@@ -10,4 +10,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Send email
-        uses: rccline/action-send-mail@v1.3.0
+        uses: rccline/action-send-mail@v1.4.0
+        env:
+          FROM: github-actions@github.com
+          TO: 'rccline@fastmail.fm'
+      - name: Send email
+        if: github.event.commits.length > 0
+        uses: rccline/action-send-mail@v1.4.0
+     
+        
