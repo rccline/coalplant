@@ -1,4 +1,4 @@
-name: Email Notification
+name: Send Email Notification
 
 on:
   push:
@@ -10,12 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Send email
-        uses: actions/email@v2
-        with:
-          subject: 'GitHub Activity'
-          body: |
-            ${{ github.actor }} pushed ${{ github.event.commits.length }} commits.
-
-            ${{ toJson(github.event.commits) }}
-          to:
-            - rccline@fastmail.fm 
+        uses: rccline/action-send-mail@v1.3.0
+        env:
+          FROM: github-actions@github.com
+          TO: 'rccline@fastmail.fm'
+     
